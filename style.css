@@ -1,0 +1,255 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    text-align: center;
+    font-size: 2.5em;
+    padding: 20px;
+    overflow: hidden;
+    transition: background-color 1s, color 1s;
+}
+
+/* Класс для светлого фона */
+body.light-mode {
+    background-color: white;
+    color: black;
+}
+
+/* Контейнер для текста, чтобы он оставался по центру */
+.lyrics-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+}
+
+/* Базовые стили для каждой строки текста */
+.lyrics {
+    position: absolute;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(70px);
+    filter: blur(0.75px);
+    text-shadow: 0 0 50px rgba(255, 255, 255, 0.9);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out, text-shadow 0.7s ease-out, filter 0.7s ease-out;
+}
+
+/* Анимация появления и поднятия текста */
+.lyrics.active {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+/* Анимация исчезновения и поднятия старого текста */
+.lyrics.hide {
+    opacity: 0;
+    transform: translateY(-70px);
+    filter: blur(0.75px);
+    text-shadow: 0 0 20px white;
+}
+
+/* Класс для темной темы элементов (черные частицы/свечение) */
+.dark-mode-elements.lyrics {
+    text-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+}
+.dark-mode-elements.lyrics.active {
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.start-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: opacity 1s ease-in-out;
+}
+
+/* Плавное исчезновение контейнера кнопки */
+.start-button-container.fade-out {
+    opacity: 0;
+}
+
+/* Обновленная кнопка */
+.start-button {
+    width: 100px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 2px solid white;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 10px white;
+    animation: pulse-button 2s infinite ease-in-out;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Эффект при наведении */
+.start-button:hover {
+    animation-play-state: paused;
+    transform: scale(1.1);
+    box-shadow: 0 0 40px white;
+}
+
+/* Символ "Play" */
+.start-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 20px solid white;
+}
+
+/* Анимация для новой кнопки */
+@keyframes pulse-button {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px white;
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px white;
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px white;
+    }
+}
+
+/* Стили для кнопки перезапуска */
+.restart-button-container {
+    display: none;
+    position: fixed;
+    bottom: 50px;
+    left: 50px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Стили для самой кнопки перезапуска */
+.restart-button {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 2px solid white;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 10px white;
+    animation: pulse-glow-restart 2s infinite ease-in-out;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Иконка перезапуска */
+.restart-button::before {
+    content: '⟳';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Новая анимация для кнопки перезапуска (без пульсации размера) */
+@keyframes pulse-glow-restart {
+    0% {
+        box-shadow: 0 0 15px white;
+    }
+    50% {
+        box-shadow: 0 0 35px white;
+    }
+    100% {
+        box-shadow: 0 0 15px white;
+    }
+}
+
+/* Эффект при наведении на кнопку перезапуска */
+.restart-button:hover {
+    animation-play-state: paused;
+    transform: scale(1.1);
+    box-shadow: 0 0 40px white;
+}
+
+particle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: contain;
+    z-index: 1;
+}
+
+/* Стили для красной кнопки-сердечка */
+.heart-button {
+    position: fixed;
+    bottom: 50px;
+    right: 50px;
+    width: 60px;
+    height: 60px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 40px;
+    color: red;
+    text-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+    animation: pulse-heart 1.5s infinite ease-in-out;
+    z-index: 100;
+    opacity: 0; /* Изначально скрыто */
+    transition: opacity 0.7s ease-in-out; /* Добавляем плавный переход */
+}
+
+/* Класс для отображения кнопки */
+.heart-button.visible {
+    opacity: 1; /* Показываем плавно */
+}
+
+/* Анимация пульсации для кнопки-сердечка */
+@keyframes pulse-heart {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+    }
+    50% {
+        transform: scale(1.1);
+        text-shadow: 0 0 25px rgba(255, 0, 0, 1);
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+    }
+}
+
+/* Стили для частиц-сердечек */
+.heart-particle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    font-size: 20px;
+    color: red;
+    text-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+    z-index: 99;
+}

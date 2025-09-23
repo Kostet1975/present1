@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Для тебя</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="image-Photoroom.ico" type="image/x-icon">
+</head>
+<body>
+
+  <div class="start-button-container" id="startButtonContainer">
+    <div class="start-button" id="startButton">
+    </div>
+  </div>
+<button id="heartButton" class="heart-button">❤️</button>
+
+  <div class="lyrics-container"></div>
+  <div class="restart-button-container" id="restartButtonContainer">
+      <div class="restart-button" id="restartButton">
+      </div>
+  </div>
+
+  <audio id="audioPlayer" src="dolina.mp3"></audio>
+
+  <script>
+    const lyricsContainer = document.querySelector('.lyrics-container');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const startButtonContainer = document.getElementById('startButtonContainer');
+    const startButton = document.getElementById('startButton');
+    const heartButton = document.getElementById('heartButton');
+    const restartButtonContainer = document.getElementById('restartButtonContainer');
+    const restartButton = document.getElementById('restartButton');
+    const body = document.body;
+    let particleInterval;
+    let sparkleInterval;
+
+    function createParticle(x, y, type) {
+        const particle = document.createElement('particle');
+        document.body.appendChild(particle);
+        let width = Math.floor(Math.random() * 30 + 8);
+        let height = width;
+
+        const spreadFactor = Math.random() * 1 + 0.5;
+        let destinationX = (Math.random() - 0.5) * 300 * spreadFactor;
+        let destinationY = (Math.random() - 0.5) * 300 * spreadFactor;
+
+        let rotation = Math.random() * 520;
+        let delay = Math.random() * 200;
+
+        let color = body.classList.contains('light-mode') ? 'black' : 'white';
+        let boxShadow = `0 0 ${Math.floor(Math.random() * 10 + 10)}px ${color}`;
+
+        switch (type) {
+            case 'shadow':
+                particle.style.boxShadow = boxShadow;
+                particle.style.background = color;
+                particle.style.borderRadius = '50%';
+                width = height = Math.random() * 5 + 4;
+                break;
+        }
+
+        particle.style.width = `${width}px`;
+        particle.style.height = `${height}px`;
+
+        const animation = particle.animate([
+            {
+                transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(0deg)`,
+                opacity: 1
+            },
+            {
+                transform: `translate(-50%, -50%) translate(${x + destinationX}px, ${y + destinationY}px) rotate(${rotation}deg)`,
+                opacity: 0
+            }
+        ], {
+            duration: Math.random() * 1000 + 5000,
+            easing: 'cubic-bezier(0, .9, .57, 1)',
+            delay: delay
+        });
+
+        animation.onfinish = () => {
+            particle.remove();
+        };
+    }
+
+    function createHeartParticle(x, y) {
+        const heartParticle = document.createElement('span');
+        heartParticle.classList.add('heart-particle');
+        heartParticle.innerHTML = '❤️';
+        document.body.appendChild(heartParticle);
+
+        const spreadFactor = Math.random() * 1 + 0.5;
+        let destinationX = (Math.random() - 0.5) * 200 * spreadFactor;
+        let destinationY = (Math.random() - 0.5) * 200 * spreadFactor;
+        let rotation = Math.random() * 360;
+        let delay = Math.random() * 100;
+
+        const animation = heartParticle.animate([
+            {
+                transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(0deg) scale(0)`,
+                opacity: 1
+            },
+            {
+                transform: `translate(-50%, -50%) translate(${x + destinationX}px, ${y + destinationY}px) rotate(${rotation}deg) scale(2.0)`,
+                opacity: 0
+            }
+        ], {
+            duration: Math.random() * 500 + 1500,
+            easing: 'cubic-bezier(0, .9, .57, 1)',
+            delay: delay
+        });
+
+        animation.onfinish = () => {
+            heartParticle.remove();
+        };
+    }
+
+    function popContinuous() {
+        const bbox = startButton.getBoundingClientRect();
+        const x = bbox.left + bbox.width / 2;
+        const y = bbox.top + bbox.height / 2;
+        const numParticles = Math.floor(Math.random() * 6) + 5;
+        for (let i = 0; i < numParticles; i++) {
+            createParticle(x, y, 'shadow');
+        }
+    }
+
+    function randomSparkle() {
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
+        const numParticles = Math.floor(Math.random() * 6) + 5;
+        for (let i = 0; i < numParticles; i++) {
+            createParticle(x, y, 'shadow');
+        }
+    }
+
+    const lyrics = [
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Чёрное небо, белые долины</strong>',
+      '<strong>Я даже не помню,<br> что так смело заявил им</strong>',
+      '<strong>Они в меня все верят,<br> будто я настоящий</strong>',
+      '<strong>Но я даже не знаю,<br> вас тут наставлять чем</strong>',
+      '<strong>Я еду поездом,<br> что разрезает белые долины</strong>',
+      '<strong>Скоро бы всех их покинуть</strong>',
+      '<strong>Они будут молить меня,<br> но останутся глупцами</strong>',
+      '<strong>Не способными взглянуть в глубь сами</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Им тоже хочется летать</strong>',
+      '<strong>Лететь им в даль,<br> Лететь им в даль</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Ливень станет снегом</strong>',
+      '<strong>Люблю тебя, Сокровище моё❤️<br>Это только для тебя!</strong>'
+    ];
+
+    const timestamps = [
+      8000, 12500, 17000, 21000,
+      25500, 29000, 34000, 38000,
+      43000, 47000, 52000, 56000,
+      60000, 65000, 69000, 73000,
+      78000, 84000, 86000, 92500,
+      96000, 99000, 104000, 108000,
+      113000, 117000, 122000, 126000,
+      130000, 135000, 139000, 143000, 150000
+    ];
+
+    let currentWordIndex = 0;
+    let isPlaying = false;
+    let isRestarting = false;
+
+    function handleTimeUpdate() {
+        if (!isPlaying || isRestarting) return;
+
+        if (audioPlayer.currentTime * 1000 >= timestamps[currentWordIndex]) {
+            const oldLyric = lyricsContainer.querySelector('.active');
+            if (oldLyric) {
+                oldLyric.classList.remove('active');
+                oldLyric.classList.add('hide');
+                setTimeout(() => {
+                    oldLyric.remove();
+                }, 1000);
+            }
+
+            const newLyric = document.createElement('div');
+            newLyric.innerHTML = lyrics[currentWordIndex];
+            newLyric.classList.add('lyrics');
+            lyricsContainer.appendChild(newLyric);
+
+            const bbox = newLyric.getBoundingClientRect();
+            const textCenterX = bbox.left + bbox.width / 2;
+            const textCenterY = bbox.top + bbox.height / 2;
+            const textWidth = bbox.width;
+            const textHeight = bbox.height;
+
+            const numFlashes = Math.floor(Math.random() * 2) + 2;
+            const particlesPerFlash = Math.floor(Math.random() * 6) + 5;
+            const offset = 50;
+
+            for (let i = 0; i < numFlashes; i++) {
+                const randomX = textCenterX + (Math.random() - 0.5) * (textWidth + 2 * offset);
+                const randomY = textCenterY + (Math.random() - 0.5) * (textHeight + 2 * offset);
+
+                for (let j = 0; j < particlesPerFlash; j++) {
+                    createParticle(randomX, randomY, 'shadow');
+                }
+            }
+
+            newLyric.offsetHeight;
+            newLyric.classList.add('active');
+
+            if (currentWordIndex >= 4 && currentWordIndex < 8 || currentWordIndex >= 12 && currentWordIndex < 20 || currentWordIndex >= 24 && currentWordIndex < 28) {
+                body.classList.add('light-mode');
+                newLyric.classList.add('dark-mode-elements');
+            } else {
+                body.classList.remove('light-mode');
+                newLyric.classList.remove('dark-mode-elements');
+            }
+
+            currentWordIndex++;
+        }
+        
+        if (currentWordIndex >= timestamps.length) {
+            audioPlayer.removeEventListener('timeupdate', handleTimeUpdate);
+            clearInterval(sparkleInterval);
+            body.classList.remove('light-mode');
+            restartButtonContainer.style.display = 'block';
+            // heartButton.classList.remove('visible'); <-- Эту строчку я убрал
+            return;
+        }
+    }
+
+    function startPlayback() {
+        isRestarting = true;
+        
+        currentWordIndex = 0;
+        lyricsContainer.innerHTML = '';
+        restartButtonContainer.style.display = 'none';
+        body.classList.remove('light-mode');
+        heartButton.classList.add('visible');
+
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+        isPlaying = true;
+        isRestarting = false;
+        
+        clearInterval(particleInterval);
+        clearInterval(sparkleInterval);
+        
+        sparkleInterval = setInterval(randomSparkle, 700);
+
+        audioPlayer.addEventListener('timeupdate', handleTimeUpdate);
+
+    }
+
+    if (document.body.animate) {
+        particleInterval = setInterval(popContinuous, 300);
+    }
+    
+    startButtonContainer.addEventListener('click', () => {
+      if (!isPlaying) {
+        startButtonContainer.classList.add('fade-out');
+        startPlayback();
+      }
+    });
+
+    heartButton.addEventListener('click', () => {
+        const bbox = heartButton.getBoundingClientRect();
+        const x = bbox.left + bbox.width / 2;
+        const y = bbox.top + bbox.height / 2;
+        const numHearts = Math.floor(Math.random() * 8) + 5;
+        for (let i = 0; i < numHearts; i++) {
+            createHeartParticle(x, y);
+        }
+    });
+
+    restartButtonContainer.addEventListener('click', startPlayback);
+  </script>
+</body>
+</html>
