@@ -238,7 +238,7 @@ particle {
 /* ===== Song list (clean, no duplicates; anti-flicker) ===== */
 
 /* Начальное состояние: список за экраном слева, невидим */
-ul.song-list {
+/*ul.song-list {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -252,37 +252,33 @@ ul.song-list {
   will-change: transform, opacity;
   backface-visibility: hidden;
   filter: blur(0.8px);
-}
+}*/
 
 /* Появление всего списка: слева -> центр, без мерцания */
-ul.song-list.show {
+/*ul.song-list.show {
   animation: slideInCenter 1s forwards ease-out;
-  animation-fill-mode: both; /* фикс промежуточного рендера */
+  animation-fill-mode: both; 
 }
-@keyframes slideInCenter {
+/*@keyframes slideInCenter {
   0%   { transform: translate(-150%, -50%); opacity: 0; }
   100% { transform: translate(-50%,  -50%); opacity: 1; }
-}
+}*/
 
 /* Элемент списка: отвечает за смещение и прозрачность (без масштабов) */
-.song-list-item {
-  display: block;
-  padding: 10px 20px;
-  margin: 6px 0;
-  cursor: pointer;
-  color: inherit;
-  font-weight: 700;
-  font-size: 0.9em;
-  background: transparent;
-  border: none;
-  outline: none;
-  opacity: 0;
-  transform: translateX(-40px);
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-}
+/*.song-list-item {
+    position: relative; 
+    padding: 15px 0;
+    margin: 5px 0;
+    cursor: pointer;
+    opacity: 0;
 
-/* Внутренний текст: свечение и безопасное масштабирование */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    text-align: left;
+    font-size: 1.2em;
+    will-change: transform, opacity;
+}*/
+
+/* Внутренний текст: свечение и безопасное масштабирование
 .song-list-item .label {
   display: inline-block;
   transform: translateZ(0) scale(1);
@@ -291,24 +287,19 @@ ul.song-list.show {
   transition: transform 0.22s ease, text-shadow 0.22s ease;
   backface-visibility: hidden;
   will-change: transform;
-}
+} */
 
-/* Hover: увеличиваем только текст внутри .label */
+/* Hover: увеличиваем только текст внутри .label 
 .song-list-item:hover .label,
 .song-list-item:focus .label {
   transform: translateZ(0) scale(1.14);
   text-shadow: 0 0 22px rgba(224,224,224,1);
   text-decoration: none;
-}
+} */
 
 /* Появление элементов лесенкой (управляет только translate у li) */
 .song-list-item.show {
-  animation: itemSlideIn 0.6s forwards ease-out;
-  animation-fill-mode: both; /* исключает скачок начального состояния */
-}
-@keyframes itemSlideIn {
-  0%   { opacity: 0; transform: translateX(-40px); }
-  100% { opacity: 1; transform: translateX(0);     }
+    opacity: 1;
 }
 
 /* Уход элементов вправо лесенкой */
@@ -414,28 +405,167 @@ body.light-mode .game-toggle-button:hover {
   box-shadow: 0 0 12px rgba(0,0,0,0.4);
 }
 
-/*============ Линии ==============*/
-.worm-line {
-  position: fixed;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 1;
+
+/* ========== Эффект вылетающих ключевых слов ========== */
+@keyframes keywordFlyOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(var(--scale-start));
+        filter: blur(2px);
+    }
+    20% {
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scale(var(--scale-start));
+        filter: blur(0px);
+    }
+    50% {
+        opacity: 0.9;
+        transform: translate(calc(-50% + var(--curve-x)), calc(-50% + var(--curve-y))) scale(calc(var(--scale-start) * 0.8));
+        filter: blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--dest-x)), calc(-50% + var(--dest-y))) scale(var(--scale-end));
+        filter: blur(5px);
+    }
 }
 
-.worm-line path {
-  stroke: rgba(255,255,255,0.8);
-  stroke-width: 2;
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 200;
-  stroke-dashoffset: 200;
-  animation: drawWorm 2s linear forwards;
-  filter: drop-shadow(0 0 6px rgba(255,255,255,0.8));
+.keyword-effect {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+    user-select: none;
+    font-size: 3.5vw;
+    font-weight: 700;
+    white-space: nowrap;
+    z-index: 5;
+    opacity: 0;
 }
 
-@keyframes drawWorm {
-  to {
-    stroke-dashoffset: 0;
-  }
+/* Цвета для светлого фона */
+body.light-mode .keyword-effect {
+    color: rgba(10, 10, 10, 0.8); /* Темный цвет */
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+/* ========================== Эффект Вспышки Света ========================== */
+.flash-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.5; /* Максимальная яркость */
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out; /* Плавное исчезновение */
+}
+
+.flash-light {
+    background-color: white;
+}
+
+.flash-dark {
+    background-color: black;
+}
+
+/* Класс для быстрого исчезновения */
+.flash-effect.fade-out {
+    opacity: 0;
+}
+/* Начальное состояние: список за экраном слева, невидим */
+ul.song-list {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Добавляем max-width, чтобы список был центрированным блоком */
+  max-width: 600px; 
+  width: 100%;
+  
+  /* Начальная позиция: далеко слева и по центру вертикали */
+  transform: translate(-150%, -50%); 
+  
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  z-index: 1000;
+  
+  /* Устанавливаем выравнивание текста внутри блока списка */
+  text-align: left; 
+  
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  filter: blur(0.8px);
+  /* Уменьшаем базовый размер шрифта для всего списка */
+  font-size: 0.8em; 
+}
+
+/* Появление всего списка: слева -> центр, без мерцания */
+ul.song-list.show {
+  animation: slideInCenter 1s forwards ease-out;
+  animation-fill-mode: both; 
+}
+@keyframes slideInCenter {
+  0%   { transform: translate(-150%, -50%); opacity: 0; }
+  /* Конечная позиция: точно по центру экрана */
+  100% { transform: translate(-50%,  -50%); opacity: 1; }
+}
+/* Элемент списка: жирный, position: relative, и transition для смещения */
+.song-list-item {
+    position: relative; /* Обязательно для позиционирования треугольника */
+    padding: 10px 0; /* Уменьшаем паддинг */
+    margin: 5px 0;
+    cursor: pointer;
+    opacity: 0;
+    
+    /* Добавляем переход для смещения, увеличения и треугольника */
+    transition: opacity 0.3s ease, transform 0.3s ease; 
+    
+    text-align: left; /* Важно: выравнивание текста внутри li */
+    font-size: 1em; /* Теперь 1em относительно 0.8em из .song-list */
+    font-weight: 700; /* Жирный шрифт */
+    will-change: transform, opacity;
+}
+
+/* 3. СМЕЩЕНИЕ ВПРАВО (20px) и УВЕЛИЧЕНИЕ (scale 1.05) при наведении */
+.song-list-item:hover,
+.song-list-item:focus {
+    /* Смещение вправо на 20px + увеличение. Transform отвечает за плавность */
+    transform: translateX(20px) scale(1.05); 
+}
+
+/* 4. Треугольный указатель (псевдоэлемент ::before) */
+.song-list-item::before {
+    content: '';
+    position: absolute;
+    /* Позиционируем на 20px левее ИСХОДНОЙ позиции текста */
+    left: -20px; 
+    top: 50%;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0; 
+
+    /* Создание треугольника, острие указывает вправо */
+    width: 0;
+    height: 0;
+    border-top: 0.2em solid transparent;
+    border-bottom: 0.2em solid transparent;
+    border-left: 0.4em solid currentColor; 
+
+    /* Изначальное состояние: повернут назад и уменьшен */
+    transform: translateY(-50%) rotate(-45deg) scale(0.5); 
+    transform-origin: 0% 50%;
+    
+    /* Плавный переход для вращения */
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+    will-change: transform, opacity;
+}
+
+/* 5. Анимация треугольника при наведении */
+.song-list-item:hover::before,
+.song-list-item:focus::before {
+    opacity: 1;
+    /* Разворот на 50 градусов и полное увеличение */
+    transform: translateY(-50%) rotate(5deg) scale(1); 
 }

@@ -13,7 +13,7 @@
   <script src="js/particles.js"></script>
   <script src="js/game.js"></script>
   <script src="js/ui.js"></script>
-
+  <script src="js/backgroundEffects.js"></script>
 </head>
 <body>
 <div class="game-toggle-button">🎮</div>
@@ -26,6 +26,7 @@
     <div class="start-button" id="startButton">
     </div>
   </div>
+
 <button id="heartButton" class="heart-button">❤️</button>
   <div class="lyrics-container"></div>
   <div class="restart-button-container" id="restartButtonContainer">
@@ -33,6 +34,32 @@
       </div>
   </div>
   <audio id="audioPlayer" src="dolina.mp3"></audio>
-</body>
 
+  <!-- Добавляем минимальный скрипт для инициализации -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // УБРАНА ЛИШНЯЯ ИНИЦИАЛИЗАЦИЯ. backgroundEffects.js делает это сам.
+      
+      const audioPlayer = document.getElementById('audioPlayer');
+      if (audioPlayer) {
+        audioPlayer.addEventListener('play', () => {
+          // console.log('[Main] Audio play detected, starting random effect');
+          if (window.backgroundEffects) {
+            // Запуск случайного эффекта при начале песни
+            window.backgroundEffects.startRandomEffect();
+          }
+        });
+        audioPlayer.addEventListener('pause', () => {
+          // console.log('[Main] Audio pause detected, stopping effect');
+          // Останавливаем случайный эффект (но оставляем эффект по умолчанию)
+          if (window.backgroundEffects && window.backgroundEffects.stopEffect) {
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
+</body>
 </html>
