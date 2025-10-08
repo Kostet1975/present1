@@ -1,11 +1,8 @@
 // js/ui.js
-// Полный файл — управление интерфейсом, список песен, обработчики кнопок.
-
 'use strict';
 
 let songListVisible = false;
 
-/* ========== Показ списка песен ========== */
 function showSongList() {
   if (songListVisible) return;
 
@@ -46,18 +43,18 @@ function showSongList() {
 
   songListVisible = true;
 
-  clearInterval(sparkleInterval);
-  sparkleInterval = setInterval(randomSparkle, 700);
+  try {
+    if (window.sparkleInterval) clearInterval(window.sparkleInterval);
+    window.sparkleInterval = setInterval(randomSparkle, 700);
+  } catch (e) {}
 }
 
-/* ========== Скрытие списка песен ========== */
 function hideSongList() {
   const ul = document.querySelector('ul.song-list');
   if (ul) ul.remove();
   songListVisible = false;
 }
 
-/* ========== Выбор песни из списка ========== */
 function playSongByIndex(index) {
   const song = songs[index];
   if (!song) return;
@@ -83,6 +80,19 @@ function playSongByIndex(index) {
           const loaded = loadSongByKey(song.key);
           if (!loaded) return;
 
+          // Запускаем рандомный фон уже при выборе (модуль сам остановит предыдущий)
+          try {
+            if (window.backgroundEffects && typeof window.backgroundEffects.startRandomEffect === 'function') {
+              window.backgroundEffects.startRandomEffect(true);
+            } else {
+              // fallback — если модули не подключены, оставляем старое поведение (randomSparkle)
+              if (typeof randomSparkle === 'function') {
+                try { if (window.sparkleInterval) clearInterval(window.sparkleInterval); } catch (e) {}
+                window.sparkleInterval = setInterval(randomSparkle, 700);
+              }
+            }
+          } catch (e) {}
+
           startButtonContainer.classList.add('fade-out');
           setTimeout(() => startPlayback(), 120);
         },
@@ -94,21 +104,15 @@ function playSongByIndex(index) {
   });
 }
 
-/* ========== Обработчики кнопок ========== */
 function initUI() {
-  // Стартовая кнопка
   startButtonContainer.addEventListener('click', () => {
     if (!isPlaying) {
-      if (particleInterval) {
-        clearInterval(particleInterval);
-        particleInterval = null;
-      }
+      try { if (window.particleInterval) { clearInterval(window.particleInterval); window.particleInterval = null; } } catch (e) {}
       startButtonContainer.classList.add('fade-out');
       setTimeout(showSongList, 800);
     }
   });
 
-  // Кнопка сердечек
   heartButton.addEventListener('click', () => {
     const bbox = heartButton.getBoundingClientRect();
     const x = bbox.left + bbox.width / 2;
@@ -117,18 +121,17 @@ function initUI() {
     for (let i = 0; i < numHearts; i++) createHeartParticle(x, y);
   });
 
-  // Кнопка перезапуска
   restartButtonContainer.addEventListener('click', () => {
     audioPlayer.pause();
     audioPlayer.currentTime = 0;
-    isPlaying = false;
+    // isPlaying will be managed by lyrics.js
+    try { if (typeof setIsPlaying !== 'undefined') setIsPlaying(false); } catch (e) {}
     lyricsContainer.innerHTML = '';
     restartButtonContainer.style.display = 'none';
     showSongList();
   });
 }
 
-/* Экспортируем глобально */
 window.showSongList = showSongList;
 window.hideSongList = hideSongList;
 window.playSongByIndex = playSongByIndex;

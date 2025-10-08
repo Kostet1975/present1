@@ -91,7 +91,7 @@ function createHeartParticle(x, y) {
 /* ========== Постоянные "взрывы" из центра стартовой кнопки ========== */
 function popContinuous() {
   if (!startButtonContainer || startButtonContainer.classList.contains('fade-out')) return;
-  const b = startButton.getBoundingClientRect();
+  const b = startButtonContainer.getBoundingClientRect();
   const x = b.left + b.width / 2;
   const y = b.top + b.height / 2;
   const num = 6 + Math.floor(Math.random() * 6);
@@ -109,8 +109,8 @@ function randomSparkle() {
 /* ========== Инициализация ========== */
 function initParticles() {
   if (document.body.animate) {
-    if (!particleInterval) {
-      particleInterval = setInterval(popContinuous, 300);
+    if (!window.particleInterval) {
+      window.particleInterval = setInterval(popContinuous, 300);
     }
   }
 }

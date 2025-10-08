@@ -1,134 +1,116 @@
 // js/lyrics.js
-// Полный файл — управление текстом песен, воспроизведение, тайминги.
-
 'use strict';
 
 /* ========== Переменные для лирики ========== */
 let lyrics = [];
 let timestamps = [];
-let keywords = []; // ДОБАВЛЕНО: Глобальный массив для ключевых слов текущей песни
+let keywords = [];
 let currentWordIndex = 0;
 let isPlaying = false;
 let isRestarting = false;
 
-// ДОБАВЛЕНО: Управление фоновыми эффектами (частицы/червячки)
-/* ========== Управление фоновыми эффектами (частицы/червячки) ========== */
-
-// Функция для остановки всех фоновых эффектов (для чистого старта)
+/* ========== Остановить все фоновые эффекты (compat + centralized) ========== */
 function stopAllBackgroundEffects() {
-    // Останавливаем мерцающие частицы (particles.js)
-    if (sparkleInterval) {
-        clearInterval(sparkleInterval);
-        sparkleInterval = null;
+  // остановим локальные интервалы sparkle, если есть (global var)
+  try {
+    if (window.sparkleInterval) {
+      clearInterval(window.sparkleInterval);
+      window.sparkleInterval = null;
     }
-    // Останавливаем червячки (worms.js) - предполагаем, что stopWormEffect доступна
-    if (typeof stopWormEffect === 'function') {
-        stopWormEffect();
+  } catch (e) {}
+
+  // centralized module
+  try {
+    if (window.backgroundEffects && typeof window.backgroundEffects.stopEffect === 'function') {
+      window.backgroundEffects.stopEffect();
     }
+  } catch (e) {}
+
+  // старые реализации-фоллбэк (если присутствовали)
+  try { if (typeof stopWormEffect === 'function') stopWormEffect(); } catch (e) {}
 }
 
-// Функция для запуска случайного фонового эффекта
+/* ========== Запустить случайный фон (централизовано) ========== */
 function startRandomBackgroundEffect() {
-    // 1. Сначала останавливаем все запущенные эффекты
-    stopAllBackgroundEffects();
-    
-    // 2. Выбираем случайный эффект: 'sparkles' (частицы) или 'worms' (червячки)
+  // выключаем предыдущие эффекты, чтобы не было наложений
+  stopAllBackgroundEffects();
+
+  // небольшая задержка, чтобы canvas успел очиститься
+  setTimeout(() => {
+    try {
+      if (window.backgroundEffects && typeof window.backgroundEffects.startRandomEffect === 'function') {
+        window.backgroundEffects.startRandomEffect(true);
+      }
+    } catch (e) {}
+  }, 150);
+
+
+  // fallback
+  try {
     const effects = ['sparkles', 'worms'];
-    const selectedEffect = effects[Math.floor(Math.random() * effects.length)];
-
-    if (selectedEffect === 'sparkles' && typeof randomSparkle === 'function') {
-        // Запускаем мерцающие частицы (particles.js)
-        sparkleInterval = setInterval(randomSparkle, 700); 
-    } else if (selectedEffect === 'worms' && typeof startWormEffect === 'function') {
-        // Запускаем червячки (worms.js)
-        startWormEffect();
+    const sel = effects[Math.floor(Math.random() * effects.length)];
+    if (sel === 'sparkles' && typeof randomSparkle === 'function') {
+      window.sparkleInterval = setInterval(randomSparkle, 700);
+    } else if (sel === 'worms' && typeof startWormEffect === 'function') {
+      startWormEffect();
     }
+  } catch (e) {}
 }
 
-/* ДОБАВЛЕНО: Функция для запуска вылетающих ключевых слов */
+/* ========== Вылетающие ключевые слова ========== */
 function launchKeywords() {
-    // Проверка наличия ключевых слов
-    if (!keywords || keywords.length < 2) return; 
-
-    // Выбираем 2 или 3 случайных слова
-    const numWordsToLaunch = Math.floor(Math.random() * 2) + 2; 
-    
-    // Создаем копию и перемешиваем для случайного выбора
-    const shuffledKeywords = [...keywords].sort(() => 0.5 - Math.random());
-    const wordsToUse = shuffledKeywords.slice(0, numWordsToLaunch);
-
-    wordsToUse.forEach((word, index) => {
-        const keywordElement = document.createElement('div');
-        keywordElement.textContent = word;
-        keywordElement.classList.add('keyword-effect');
-        
-        // Определяем случайную конечную позицию (вылет за пределы экрана)
-        const destX = (Math.random() - 0.5) * window.innerWidth * 1.5;
-        const destY = (Math.random() - 0.5) * window.innerHeight * 1.5;
-        
-        // Случайный сдвиг времени для эффекта "вылетают друг за другом"
-        const delay = index * 200; 
-
-        // Устанавливаем переменные для CSS-анимации
-        keywordElement.style.setProperty('--dest-x', `${destX}px`);
-        keywordElement.style.setProperty('--dest-y', `${destY}px`);
-        keywordElement.style.animationDelay = `${delay}ms`;
-        
-        document.body.appendChild(keywordElement);
-        
-        // Удаляем элемент после завершения анимации (4000ms + задержка)
-        setTimeout(() => {
-            keywordElement.remove();
-        }, 4000 + delay);
-    });
+  if (!keywords || keywords.length < 1) return;
+  const num = Math.min(keywords.length, Math.floor(Math.random() * 2) + 1);
+  const shuffled = [...keywords].sort(() => 0.5 - Math.random());
+  const chosen = shuffled.slice(0, num);
+  chosen.forEach((word, idx) => {
+    const el = document.createElement('div');
+    el.className = 'keyword-effect';
+    el.textContent = word;
+    const destX = (Math.random() - 0.5) * window.innerWidth * 1.4;
+    const destY = (Math.random() - 0.5) * window.innerHeight * 1.4;
+    el.style.setProperty('--dest-x', `${destX}px`);
+    el.style.setProperty('--dest-y', `${destY}px`);
+    el.style.animationDelay = `${idx * 140}ms`;
+    document.body.appendChild(el);
+    setTimeout(() => { try { el.remove(); } catch (e) {} }, 4200 + idx * 140);
+  });
 }
 
-/* ========== Обновление текста при смене тайм-кодов ========== */
+/* ========== Обновление при timeupdate ========== */
 function handleTimeUpdate() {
   if (!isPlaying || isRestarting) return;
 
   if (audioPlayer.currentTime * 1000 >= timestamps[currentWordIndex]) {
-    // Удаление старой активной строки
     const oldLyric = lyricsContainer.querySelector('.active');
     if (oldLyric) {
       oldLyric.classList.remove('active');
       oldLyric.classList.add('hide');
-      setTimeout(() => oldLyric.remove(), 1000);
+      setTimeout(() => { try { oldLyric.remove(); } catch (e) {} }, 1000);
     }
 
-    // Добавляем новую строку
     const newLyric = document.createElement('div');
-    newLyric.innerHTML = lyrics[currentWordIndex];
-    newLyric.classList.add('lyrics');
+    newLyric.className = 'lyrics';
+    newLyric.innerHTML = lyrics[currentWordIndex] || '';
     lyricsContainer.appendChild(newLyric);
 
-    // **********************************************
-    // ВЫЗОВ: Запуск ключевых слов при новой строке
-    launchKeywords();
-    // **********************************************
+    // запускаем ключевые слова
+    try { launchKeywords(); } catch (e) {}
 
-    // Создаём "вспышки" вокруг текста
-    const bbox = newLyric.getBoundingClientRect();
-    const textCenterX = bbox.left + bbox.width / 2;
-    const textCenterY = bbox.top + bbox.height / 2;
-    const textWidth = bbox.width;
-    const textHeight = bbox.height;
-    
-    // Запуск частиц (функция createParticle() должна быть определена в particles.js)
-    const num = Math.floor(Math.random() * 5) + 3;
-    for (let i = 0; i < num; i++) {
-        const x = textCenterX + (Math.random() - 0.5) * textWidth * 0.8;
-        const y = textCenterY + (Math.random() - 0.5) * textHeight * 0.8;
-        createParticle(x, y, 'shadow');
-    }
+    // частицы вокруг текста (используем createParticle)
+    try {
+      const bbox = newLyric.getBoundingClientRect();
+      const cx = bbox.left + bbox.width/2;
+      const cy = bbox.top + bbox.height/2;
+      const n = Math.floor(Math.random() * 5) + 3;
+      for (let i = 0; i < n; i++) if (typeof createParticle === 'function') createParticle(cx + (Math.random()-0.5)*bbox.width*0.6, cy + (Math.random()-0.5)*bbox.height*0.6, 'shadow');
+    } catch (e) {}
+
+    newLyric.offsetHeight;
     newLyric.classList.add('active');
 
-
-    // Логика переключения темного/светлого режима
-    if (
-      (currentWordIndex >= 14 && currentWordIndex < 20) ||
-      (currentWordIndex >= 24 && currentWordIndex < 28)
-    ) {
+    // логика темы (сохранена)
+    if ((currentWordIndex >= 14 && currentWordIndex < 20) || (currentWordIndex >= 24 && currentWordIndex < 28)) {
       body.classList.add('light-mode');
       newLyric.classList.add('dark-mode-elements');
     } else {
@@ -139,10 +121,10 @@ function handleTimeUpdate() {
     currentWordIndex++;
   }
 
-  // Конец песни
+  // конец песни
   if (currentWordIndex >= timestamps.length) {
     audioPlayer.removeEventListener('timeupdate', handleTimeUpdate);
-    stopAllBackgroundEffects(); // Остановка всех фоновых эффектов
+    stopAllBackgroundEffects();
     body.classList.remove('light-mode');
     restartButtonContainer.style.display = 'block';
     return;
@@ -158,20 +140,40 @@ function startPlayback() {
   body.classList.remove('light-mode');
   heartButton.classList.add('visible');
 
+  // убираем глобальные popContinuous при запуске эффекта
+  try {
+    if (window.particleInterval) {
+      clearInterval(window.particleInterval);
+      window.particleInterval = null;
+    }
+  } catch (e) {}
+
+  // запускаем рандомный фоновый эффект
+  try { startRandomBackgroundEffect(); } catch (e) {}
+
   audioPlayer.currentTime = 0;
   audioPlayer.play();
   isPlaying = true;
   isRestarting = false;
 
-  // Запуск случайного фонового эффекта
-  startRandomBackgroundEffect(); 
+  // оставим лёгкие случайные искры как микро-эффект (не мешают)
+  try {
+    if (window.sparkleInterval) clearInterval(window.sparkleInterval);
+    window.sparkleInterval = setInterval(randomSparkle, 700);
+  } catch (e) {}
 
   audioPlayer.addEventListener('timeupdate', handleTimeUpdate);
 }
 
-/* ========== Инициализация ========== */
+/* ========== initLyrics ========== */
 function initLyrics() {
-    // console.info('lyrics.js: Initialized.');
-    // Никакой логики DOM в initLyrics не требуется, так как переменные уже
-    // инициализированы в core.js
+  // noop — DOM инициализация в core.js
 }
+
+/* Экспорт */
+window.handleTimeUpdate = handleTimeUpdate;
+window.startPlayback = startPlayback;
+window.initLyrics = initLyrics;
+window.startRandomBackgroundEffect = startRandomBackgroundEffect;
+window.stopAllBackgroundEffects = stopAllBackgroundEffects;
+window.launchKeywords = launchKeywords;

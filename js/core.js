@@ -1,11 +1,7 @@
 // js/core.js
-// Полный файл — глобальные переменные, init и loadSongByKey.
-// Этот файл безопасно подключать в <head>, он ждёт DOMContentLoaded
-// и только потом обращается к DOM и вызывает init-функции из других файлов.
-
 'use strict';
 
-/* ========== Глобальные переменные (объявляем здесь, присвоим позже) ========== */
+/* ========== Глобальные переменные ========== */
 let lyricsContainer = null;
 let audioPlayer = null;
 let startButtonContainer = null;
@@ -22,17 +18,15 @@ let canvas = null;
 let ctx = null;
 
 /* Интервалы для частиц и sparkles (определяются/используются в других модулях) */
-let particleInterval = null;
-let sparkleInterval = null;
+window.particleInterval = null;
+window.sparkleInterval = null;
 
-/* ========== Функция загрузки песни по ключу (использует songLibrary из songs.js) ========== */
+/* ========== Загрузка песни по ключу ========== */
 function loadSongByKey(key) {
-  // songLibrary определяется в js/songs.js (подключается перед core.js)
   const song = typeof songLibrary !== 'undefined' ? songLibrary[key] : null;
   if (!song) return false;
   try {
     if (!audioPlayer) {
-      // Если аудиоплеер ещё не инициализирован — корректно завершаем
       console.warn('audioPlayer is not ready yet in loadSongByKey');
       return false;
     }
@@ -40,11 +34,9 @@ function loadSongByKey(key) {
     audioPlayer.currentTime = 0;
     audioPlayer.load();
   } catch (e) {
-    // защищаемся от ошибок браузера при установке src
     console.warn('Failed to load song src', e);
   }
 
-  // lyrics и timestamps — объявлены в js/lyrics.js (внешний файл)
   if (typeof lyrics !== 'undefined' && Array.isArray(song.lyrics)) {
     lyrics = song.lyrics.slice();
   }
@@ -54,27 +46,22 @@ function loadSongByKey(key) {
   if (typeof currentWordIndex !== 'undefined') {
     currentWordIndex = 0;
   }
-  if (typeof window.keywords !== 'undefined') {
-        window.keywords = song.keywords || []; 
-    }
   if (lyricsContainer) lyricsContainer.innerHTML = '';
   return true;
 }
 
-/* ========== Вспомогательная функция: безопасная попытка вызвать init-функции других модулей ========== */
+/* ========== Safe call helper ========== */
 function callIfFunction(fnName) {
   try {
     const fn = window[fnName];
     if (typeof fn === 'function') fn();
   } catch (e) {
-    // Не ломаем всё, просто логируем
-    // console.warn('Failed to call', fnName, e);
+    // ignore
   }
 }
 
-/* ========== Инициализация — выполняется после полной загрузки DOM ========== */
+/* ========== DOMContentLoaded init ========== */
 document.addEventListener('DOMContentLoaded', () => {
-  // query и присвоение DOM-элементов
   lyricsContainer = document.querySelector('.lyrics-container');
   audioPlayer = document.getElementById('audioPlayer');
   startButtonContainer = document.getElementById('startButtonContainer');
@@ -90,21 +77,25 @@ document.addEventListener('DOMContentLoaded', () => {
   canvas = document.getElementById('noteGameCanvas');
   ctx = canvas ? canvas.getContext('2d') : null;
 
-  // ---- Вызов init-функций из других модулей, если они присутствуют ----
-  // Эти функции (initParticles, initLyrics, initGame, initUI) определяются в
-  // соответствующих файлах, которые подключены после core.js в <head>.
-  // Мы вызываем их только после того, как весь DOM и все скрипты загружены.
+  // Инициализируем модули (если присутствуют)
+  callIfFunction('initParticles');
+  callIfFunction('initLyrics');
+  callIfFunction('initGame');
+  callIfFunction('initUI');
 
-  callIfFunction('initParticles'); // particles.js
-  callIfFunction('initLyrics');    // lyrics.js (если нужен init)
-  callIfFunction('initGame');      // game.js
-  callIfFunction('initUI');        // ui.js
-
-  // Небольшая удобная подсказка в консоль — можно убрать
-  // console.info('core.js: DOM ready, core variables initialized.');
+  // Останавливаем фоновые эффекты и восстанавливаем popContinuous при паузе/конце
+  if (audioPlayer) {
+    audioPlayer.addEventListener('pause', () => {
+      try { if (window.backgroundEffects && typeof window.backgroundEffects.stopEffect === 'function') window.backgroundEffects.stopEffect(); } catch (e) {}
+      try { if (typeof initParticles === 'function') initParticles(); } catch (e) {}
+    });
+    audioPlayer.addEventListener('ended', () => {
+      try { if (window.backgroundEffects && typeof window.backgroundEffects.stopEffect === 'function') window.backgroundEffects.stopEffect(); } catch (e) {}
+      try { if (typeof initParticles === 'function') initParticles(); } catch (e) {}
+    });
+  }
 });
 
-/* Экспорт (на случай, если кто-то ожидает их на window) */
-/* (не обязательно, имена доступны в глобальной области, но на всякий случай) */
+/* Экспорт на window */
 window.loadSongByKey = loadSongByKey;
 window.callIfFunction = callIfFunction;
